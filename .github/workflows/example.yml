@@ -1,0 +1,27 @@
+name: Testing Build Matrices
+on: 
+  workflow_dispatch:
+    inputs:
+      assignment:
+        description: "The assignment to fuzz"
+        required: true
+        type: string
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.step1.outputs.test }}
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - run: echo "Assignment $ASSIGNMENT"
+        env:
+          ASSIGNMENT: ${{ inputs.assignment }}
+      - id: step1
+        run: echo "::set-output name=test::{\"include\":[{\"repo\":\"repo1\",\"mode\":\"M\"},{\"repo\":\"repo2\",\"mode\":\"S\"},{\"repo\":\"repo3\",\"mode\":\"S\"}]}"
+  job2:
+    runs-on: ubuntu-latest
+    needs: job1
+    strategy:
+      matrix: ${{fromJSON(needs.job1.outputs.output1)}}
+    steps:
+      - run: echo ${{matrix.repo}} ${{matrix.mode}}
